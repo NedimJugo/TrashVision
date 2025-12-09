@@ -1,0 +1,21 @@
+# TrashVision Dataset Configuration for YOLOv8
+
+path: ../data/processed  # root folder (relativno od modela)
+train: train  # train images folder
+val: val      # validation images folder
+test: test    # test images folder
+
+# Classes
+names:
+  0: battery
+  1: biological
+  2: cardboard
+  3: clothes
+  4: glass
+  5: metal
+  6: paper
+  7: plastic
+  8: shoes
+  9: trash
+
+nc: 10  # number of classes

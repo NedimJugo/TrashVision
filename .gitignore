@@ -1,0 +1,101 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+.Python
+build/
+develop-eggs/
+dist/
+downloads/
+eggs/
+.eggs/
+lib/
+lib64/
+parts/
+sdist/
+var/
+wheels/
+*.egg-info/
+.installed.cfg
+*.egg
+
+# Virtual Environment
+venv/
+env/
+ENV/
+virtualenv/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+*.ipynb
+
+# PyCharm
+.idea/
+
+# VS Code
+.vscode/
+
+# Models (large files - users should train their own or download separately)
+*.pt
+*.pth
+*.onnx
+*.engine
+*.tflite
+*.pb
+
+# Keep only the model folder structure, not the actual weights
+!models/.gitkeep
+models/*/weights/*.pt
+models/*/weights/*.pth
+models/backups/
+
+# Data (large datasets - users should download from Kaggle)
+data/raw/
+data/processed/
+data/new_samples/
+
+# Keep folder structure
+!data/.gitkeep
+!data/processed/.gitkeep
+!data/raw/.gitkeep
+!data/new_samples/.gitkeep
+
+# Training runs and logs
+runs/
+*.log
+
+# User feedback and learning data
+data/user_feedback.json
+data/learning_config.json
+
+# OS specific
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# Temporary files
+*.tmp
+*.temp
+*.swp
+*.swo
+*~
+
+# Pytest
+.pytest_cache/
+.coverage
+htmlcov/
+
+# MyPy
+.mypy_cache/
+.dmypy.json
+dmypy.json
+
+# Environment variables
+.env
+.env.local

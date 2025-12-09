@@ -1,0 +1,1371 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrashVision Pro - AI Waste Classifier</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --primary: #10b981;
+            --secondary: #059669;
+            --accent: #3b82f6;
+            --bg-main: #f0fdf4;
+            --bg-card: #ffffff;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border: #d1fae5;
+            --shadow: rgba(0, 0, 0, 0.1);
+        }
+
+        [data-theme="dark"] {
+            --primary: #10b981;
+            --secondary: #059669;
+            --accent: #60a5fa;
+            --bg-main: #0f172a;
+            --bg-card: #1e293b;
+            --text-primary: #f1f5f9;
+            --text-secondary: #94a3b8;
+            --border: #1e4639;
+            --shadow: rgba(0, 0, 0, 0.3);
+        }
+
+        body {
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: var(--bg-main);
+            color: var(--text-primary);
+            transition: all 0.3s ease;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+            min-height: 100vh;
+            /* KORISTI min-height umjesto height */
+            display: flex;
+            flex-direction: column;
+        }
+
+        @keyframes slideIn {
+            from {
+                transform: translateX(400px);
+                opacity: 0;
+            }
+
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+
+        /* Header - kompaktniji */
+        .header {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 20px 30px;
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            font-size: 2rem;
+        }
+
+        .logo-text h1 {
+            font-size: 1.5rem;
+            color: var(--text-primary);
+            font-weight: 700;
+        }
+
+        .logo-text p {
+            font-size: 0.875rem;
+            color: var(--text-secondary);
+        }
+
+        .header-actions {
+            display: flex;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .theme-toggle {
+            background: var(--primary);
+            border: none;
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            color: white;
+            cursor: pointer;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .theme-toggle:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .stats-mini {
+            display: flex;
+            gap: 20px;
+            padding: 0 20px;
+            border-left: 2px solid var(--border);
+        }
+
+        .stat-mini {
+            text-align: center;
+        }
+
+        .stat-mini-value {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--primary);
+        }
+
+        .stat-mini-label {
+            font-size: 0.75rem;
+            color: var(--text-secondary);
+        }
+
+        /* Main Grid - optimizovan za jedan ekran */
+        .main-content {
+            flex: 1;
+            display: grid;
+            grid-template-columns: 2fr 1fr;
+            gap: 20px;
+            overflow-y: auto;
+            /* DODAJ OVO */
+            min-height: 0;
+            /* OVO POMAŽE FLEX CHILDRENIMA DA SCROLL */
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 2px 8px var(--shadow);
+            border: 1px solid var(--border);
+            display: flex;
+            flex-direction: column;
+            min-height: 0;
+            /* DODAJ OVO */
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+
+        .card-title {
+            font-size: 1.125rem;
+            font-weight: 600;
+            color: var(--text-primary);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        /* Upload Area - kompaktnija */
+        .upload-zone {
+            border: 2px dashed var(--primary);
+            border-radius: 12px;
+            padding: 40px 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            background: var(--bg-main);
+        }
+
+        .upload-zone:hover {
+            border-color: var(--secondary);
+            background: var(--primary);
+            background: linear-gradient(135deg, var(--primary)10 0%, var(--secondary)10 100%);
+        }
+
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 12px;
+        }
+
+        .upload-text {
+            font-size: 1rem;
+            color: var(--text-primary);
+            margin-bottom: 16px;
+        }
+
+        .upload-buttons {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+        }
+
+        .btn {
+            padding: 10px 24px;
+            border: none;
+            border-radius: 10px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+
+        .btn-secondary {
+            background: transparent;
+            color: var(--primary);
+            border: 2px solid var(--primary);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .btn-small {
+            padding: 6px 16px;
+            font-size: 0.85rem;
+        }
+
+        /* Preview & Results */
+        .preview-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .preview-image {
+            width: 100%;
+            max-height: 300px;
+            object-fit: contain;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .results-container {
+            display: none;
+            margin-top: 20px;
+        }
+
+        .result-main {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: white;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 16px;
+        }
+
+        .result-class {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .result-confidence {
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .result-badges {
+            display: flex;
+            gap: 8px;
+            margin-top: 12px;
+        }
+
+        .badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.2);
+        }
+
+        /* Expandable Info */
+        .info-section {
+            background: var(--bg-main);
+            border-radius: 12px;
+            margin-bottom: 12px;
+            overflow: hidden;
+        }
+
+        .info-header {
+            padding: 16px;
+            cursor: pointer;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: all 0.3s ease;
+        }
+
+        .info-header:hover {
+            background: var(--border);
+        }
+
+        .info-title {
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .info-content {
+            max-height: 0;
+            overflow: hidden;
+            transition: max-height 0.3s ease;
+            padding: 0 16px;
+        }
+
+        .info-content.expanded {
+            max-height: 500px;
+            padding: 0 16px 16px;
+        }
+
+        .info-item {
+            padding: 12px;
+            background: var(--bg-card);
+            border-radius: 8px;
+            margin-bottom: 8px;
+            border-left: 4px solid var(--primary);
+        }
+
+        .info-item strong {
+            display: block;
+            margin-bottom: 4px;
+            color: var(--primary);
+        }
+
+        /* Sidebar */
+        .sidebar {
+            display: flex;
+            flex-direction: column;
+            gap: 20px;
+            overflow-y: auto;
+            /* DODAJ OVO */
+            min-height: 0;
+            /* DODAJ OVO */
+        }
+
+        /* History - kompaktnija */
+        .history-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 10px;
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .history-item {
+            position: relative;
+            border-radius: 8px;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.3s;
+            aspect-ratio: 1;
+        }
+
+        .history-item:hover {
+            transform: scale(1.05);
+            box-shadow: 0 4px 12px var(--shadow);
+        }
+
+        .history-item img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .history-label {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
+            color: white;
+            padding: 8px 4px;
+            font-size: 0.7rem;
+            text-align: center;
+        }
+
+        /* Loading */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            border: 4px solid var(--border);
+            border-top: 4px solid var(--primary);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 16px;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        /* Camera Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            z-index: 1000;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+
+        .modal-content {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 30px;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        #cameraVideo {
+            width: 100%;
+            border-radius: 12px;
+            margin-bottom: 20px;
+        }
+
+        /* Scrollbar */
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-main);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--primary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--secondary);
+        }
+
+        /* Dodaj na kraj CSS fajla */
+        .disposal-info,
+        .recycling-info {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        /* Stil za sidebar cardove da budu malo kompaktniji */
+        .sidebar .card {
+            padding: 20px;
+        }
+
+        .sidebar .card-header {
+            margin-bottom: 12px;
+            padding-bottom: 12px;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .sidebar .info-item {
+            padding: 10px;
+            background: var(--bg-main);
+            border-radius: 8px;
+            border-left: 4px solid var(--primary);
+            font-size: 0.9rem;
+        }
+
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .stats-mini {
+                display: none;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .header {
+                flex-direction: column;
+                gap: 16px;
+            }
+
+            .history-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        /* Dodatne klase za kategorije otpada */
+        .category-battery {
+            --cat-color: #f59e0b;
+        }
+
+        .category-biological {
+            --cat-color: #10b981;
+        }
+
+        .category-cardboard {
+            --cat-color: #3b82f6;
+        }
+
+        .category-clothes {
+            --cat-color: #ec4899;
+        }
+
+        .category-glass {
+            --cat-color: #06b6d4;
+        }
+
+        .category-metal {
+            --cat-color: #6b7280;
+        }
+
+        .category-paper {
+            --cat-color: #3b82f6;
+        }
+
+        .category-plastic {
+            --cat-color: #eab308;
+        }
+
+        .category-shoes {
+            --cat-color: #78350f;
+        }
+
+        .category-trash {
+            --cat-color: #64748b;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <div class="logo">
+                <div class="logo-icon">♻️</div>
+                <div class="logo-text">
+                    <h1>TrashVision Pro</h1>
+                    <p>AI Klasifikacija Otpada</p>
+                </div>
+            </div>
+
+            <div class="header-actions">
+                <div class="stats-mini">
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="headerTotal">0</div>
+                        <div class="stat-mini-label">Skenova</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="headerRecyclable">0</div>
+                        <div class="stat-mini-label">Reciklirano</div>
+                    </div>
+                    <div class="stat-mini">
+                        <div class="stat-mini-value" id="headerCO2">0kg</div>
+                        <div class="stat-mini-label">CO₂ Sačuvano</div>
+                    </div>
+                </div>
+                <button class="theme-toggle" onclick="toggleTheme()">☀️</button>
+                <button class="btn btn-small btn-secondary" onclick="showLearningStats()" style="padding: 10px 20px;">
+                    📊 Stats
+                </button>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="main-content">
+            <!-- Left Column -->
+            <div class="card">
+                <div class="card-header">
+                    <div class="card-title">📸 Analiziraj Otpad</div>
+                    <button class="btn btn-small btn-secondary" onclick="reset()" style="display: none;" id="resetBtn">
+                        🔄 Nova Slika
+                    </button>
+                </div>
+
+                <!-- Upload Zone -->
+                <div class="upload-zone" id="uploadZone">
+                    <div class="upload-icon">🗑️</div>
+                    <div class="upload-text">Klikni ili prevuci sliku ovdje</div>
+                    <div class="upload-buttons">
+                        <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                            📁 Izaberi Fajl
+                        </button>
+                        <button class="btn btn-secondary" onclick="openCamera()">
+                            📷 Kamera
+                        </button>
+                    </div>
+                    <input type="file" id="fileInput" accept="image/*" style="display: none;">
+                </div>
+
+                <!-- Loading -->
+                <div class="loading" id="loading">
+                    <div class="spinner"></div>
+                    <p>Analiziram sliku...</p>
+                </div>
+
+                <!-- Preview -->
+                <div class="preview-container" id="previewContainer">
+                    <img id="previewImage" class="preview-image" alt="Preview">
+                </div>
+
+                <!-- Results -->
+                <div class="results-container" id="resultsContainer">
+                    <div class="result-main" id="resultMain">
+                        <div class="result-class" id="resultClass"></div>
+                        <div class="result-confidence" id="resultConfidence"></div>
+                        <div class="result-badges" id="resultBadges"></div>
+                    </div>
+
+                    <!-- Environmental Impact -->
+                    <div class="info-section">
+                        <div class="info-header" onclick="toggleInfo('impact')">
+                            <div class="info-title">🌍 Uticaj na Okolinu</div>
+                            <span id="impact-arrow">▼</span>
+                        </div>
+                        <div class="info-content" id="impact-content">
+                            <div class="info-item">
+                                <strong>Vrijeme Razgradnje:</strong>
+                                <span id="degradationTime"></span>
+                            </div>
+                            <div class="info-item">
+                                <strong>Ekološki Uticaj:</strong>
+                                <span id="environmentalImpact"></span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Other Predictions -->
+                    <div class="info-section">
+                        <div class="info-header" onclick="toggleInfo('other')">
+                            <div class="info-title">📊 Druge Mogućnosti</div>
+                            <span id="other-arrow">▼</span>
+                        </div>
+                        <div class="info-content" id="other-content">
+                            <div id="otherPredictions"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Right Column (Sidebar) -->
+            <div class="sidebar">
+                <!-- History -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🖼️ Historija</div>
+                    </div>
+                    <div class="history-grid" id="historyGrid">
+                        <p style="color: var(--text-secondary); text-align: center; grid-column: 1/-1;">Nema istorije
+                        </p>
+                    </div>
+                </div>
+
+                <!-- Premještene sekcije iz lijeve kolone -->
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">🗑️ Gdje Baciti</div>
+                    </div>
+                    <div class="disposal-info" id="disposalInfo">
+                        <div class="info-item" style="margin-top: 0;">
+                            <strong>Tip Kontejnera:</strong>
+                            <span id="disposalTypeSidebar">-</span>
+                        </div>
+                        <div class="info-item">
+                            <strong>Instrukcije:</strong>
+                            <span id="disposalInstructionsSidebar">-</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header">
+                        <div class="card-title">♻️ Reciklaža</div>
+                    </div>
+                    <div class="recycling-info" id="recyclingInfoSidebar">
+                        <div class="info-item" style="margin-top: 0;" id="recyclingInfoContent">
+                            <strong>-</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Fun Fact -->
+                <div class="card"
+                    style="background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%); color: white;">
+                    <div class="card-title" style="color: white;">💡 Znate Li?</div>
+                    <p id="funFact" style="font-size: 0.95rem; line-height: 1.6;"></p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Camera Modal -->
+    <div class="modal" id="cameraModal">
+        <div class="modal-content">
+            <h2 style="color: var(--text-primary); margin-bottom: 20px;">📷 Uslikaj Otpad</h2>
+            <video id="cameraVideo" autoplay playsinline></video>
+            <div style="display: flex; gap: 15px;">
+                <button class="btn btn-primary" onclick="capturePhoto()" style="flex: 1;">📸 Uslikaj</button>
+                <button class="btn btn-secondary" onclick="closeCamera()" style="flex: 1;">❌ Otkaži</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:8000';
+        let currentStream = null;
+        let history = [];
+        let stats = { total: 0, recyclable: 0, confidence: 0, co2: 0 };
+        let currentImageFile = null;
+
+        // Detaljnije informacije o svakoj kategoriji
+        const WASTE_INFO = {
+            battery: {
+                name: 'Battery (Baterija)', 
+                disposal: 'Poseban kontejner za baterije ili reciklažno dvorište',
+                instructions: 'Nikad ne bacajte baterije u obični otpad! Sadrže toksične materijale.',
+                degradation: '100-1000 godina',
+                impact: 'Izuzetno štetne za okolinu - sadrže teške metale koji zagađuju zemljište i podzemne vode.',
+                recycling: 'Baterije se mogu reciklirati do 98%. Metali se ekstrahuju i ponovo koriste.',
+                bin: 'Crveni kontejner za opasni otpad ili reciklažna stanica'
+            },
+            biological: {
+                name: 'Biological (Organski otpad)',
+                disposal: 'Braon/zelena kanta za organski otpad',
+                instructions: 'Idealno za kompostiranje. Ne miješajte sa plastikom ili staklom.',
+                degradation: '2 sedmice - 1 godina',
+                impact: 'Prirodno se razgrađuje i postaje dio prirodnog ciklusa. Može se koristiti kao đubrivo.',
+                recycling: 'Pretvara se u kompost koji obogaćuje zemljište. Smanjuje potrebu za hemijskim đubrivima.',
+                bin: 'Braon/zelena kanta'
+            },
+            cardboard: {
+                name: 'Cardboard (Katronski otpad)',
+                disposal: 'Plavi kontejner za papir i karton',
+                instructions: 'Uvijek spljoštite kartonske kutije prije bacanja. Uklonite svu plastiku i ljepljivu traku.',
+                degradation: '2-3 mjeseca',
+                impact: 'Lako razgradiv materijal. Recikliranje štedi stabla i smanjuje CO₂ emisije.',
+                recycling: 'Može se reciklirati 5-7 puta. Jedna tona recikliranog kartona spašava 17 stabala.',
+                bin: 'Plavi kontejner'
+            },
+            clothes: {
+                name: 'Clothes (Odjeća)',
+                disposal: 'Donirati ili kontejner za tekstil',
+                instructions: 'Očistite odjeću prije doniranja. Oštećenu odjeću odnesite u tekstilnu reciklažu.',
+                degradation: '1-40 godina (zavisi od materijala)',
+                impact: 'Tekstilna industrija je među najvećim zagađivačima. Reciklaža dramatično smanjuje uticaj.',
+                recycling: 'Može se reciklirati u nova vlakna, izolaciju, ili industrijsku krpu. Donacija produžava životni vijek.',
+                bin: 'Kontejner za tekstil ili donacija'
+            },
+            glass: {
+                name: 'Glass (Staklo)',
+                disposal: 'Zeleni kontejner za staklo',
+                instructions: 'Isperite boce prije bacanja. Odvojite poklopce. Specijalno staklo (prozori, staklo automobila) ide na reciklažu.',
+                degradation: '1 milion godina+',
+                impact: 'Ne razgrađuje se prirodno, ali je 100% reciklabilno beskonačno bez gubitka kvaliteta.',
+                recycling: 'Staklo se može reciklirati beskonačno puta. Recikliranje štedi 30% energije u odnosu na proizvodnju.',
+                bin: 'Zeleni kontejner'
+            },
+            metal: {
+                name: 'Metal (Metalni otpad)',
+                disposal: 'Žuti kontejner za metal i plastiku',
+                instructions: 'Isperite konzerve. Mogu se baciti limenke, folija, konzerve, poklopci.',
+                degradation: '50-500 godina',
+                impact: 'Teški metali zagađuju zemljište i vodu. Reciklaža dramatično smanjuje potrošnju energije.',
+                recycling: 'Aluminijum se reciklira beskonačno. Štedi 95% energije. Jedna reciklirana limenka napaja TV 3 sata.',
+                bin: 'Žuti kontejner'
+            },
+            paper: {
+                name: 'Paper (Papirni otpad)',
+                disposal: 'Plavi kontejner za papir',
+                instructions: 'Uklonite plastične dijelove. Vlaže papir ne treba biti previše mokar.',
+                degradation: '2-6 sedmica',
+                impact: 'Reciklaža papira smanjuje sječu šuma i emisije CO₂.',
+                recycling: 'Može se reciklirati 5-7 puta. Recikliranje tone papira spašava 17 stabala i 26,000L vode.',
+                bin: 'Plavi kontejner'
+            },
+            plastic: {
+                name: 'Plastic (Plastika)',
+                disposal: 'Žuti kontejner za plastiku',
+                instructions: 'Isperite boce. Sploštite da uštedite prostor. Provjerite simbol reciklaže (1-7).',
+                degradation: '450-1000 godina',
+                impact: 'Jedan od najštetnijih materijala. Mikroplastika zagađuje oceane i ulazi u lanac ishrane.',
+                recycling: 'Različiti tipovi: PET, HDPE se najlakše recikliraju. Reciklaža štedi 88% energije.',
+                bin: 'Žuti kontejner'
+            },
+            shoes: {
+                name: 'Shoes (Cipele/tene)',
+                disposal: 'Donirati ili kontejner za tekstil',
+                instructions: 'Donirajte nosive cipele. Oštećene odnesite u specijalizovanu reciklažu.',
+                degradation: '25-40 godina',
+                impact: 'Kombinacija materijala otežava reciklažu. Donacija je najbolja opcija.',
+                recycling: 'Može se razgraditi na dijelove - guma za sportske podloge, koža za novi proizvodi.',
+                bin: 'Kontejner za tekstil ili donacija'
+            },
+            trash: {
+                name: 'Trash (Ostali otpad)',
+                disposal: 'Crna/siva kanta za mješoviti otpad',
+                instructions: 'Samo materijali koji se ne mogu reciklirati. Pokušajte minimizirati ovu kategoriju.',
+                degradation: 'Zavisi od materijala',
+                impact: 'Završava na deponiji ili u spaljivanju. Najveći negativni uticaj na okolinu.',
+                recycling: 'Ne može se reciklirati. Fokusirajte se na smanjenje proizvodnje ovog otpada.',
+                bin: 'Crna/siva kanta'
+            }
+        };
+
+        const funFacts = [
+            "💡 Jedna reciklirana aluminijska limenka štedi dovoljno energije da napaja TV 3 sata!",
+            "🌍 Recikliranjem jedne tone papira spasavamo 17 stabala i 26,000 litara vode.",
+            "♻️ Plastična boca razgrađuje se 450-1000 godina u prirodi.",
+            "🔋 95% energije za proizvodnju aluminija može se sačuvati reciklažom.",
+            "🌊 Svake godine u okeane završi 8-12 miliona tona plastike.",
+            "📱 Samo 20% elektronskog otpada se pravilno reciklira globalno.",
+            "🗑️ Prosječna porodica proizvede 1.5 tone otpada godišnje.",
+            "♻️ Staklo se može reciklirati beskonačno bez gubitka kvaliteta.",
+            "🌱 Kompostiranjem organskog otpada smanjujete emisije metana do 50%.",
+            "💧 Recikliranje plastike štedi dvostruko više energije nego spaljivanje."
+        ];
+
+        // Theme toggle
+        function toggleTheme() {
+            const theme = document.documentElement.getAttribute('data-theme');
+            const newTheme = theme === 'dark' ? 'light' : 'dark';
+            document.documentElement.setAttribute('data-theme', newTheme);
+            document.querySelector('.theme-toggle').textContent = newTheme === 'dark' ? '☀️' : '🌙';
+        }
+
+        // Toggle expandable sections
+        function toggleInfo(section) {
+            const content = document.getElementById(`${section}-content`);
+            const arrow = document.getElementById(`${section}-arrow`);
+            content.classList.toggle('expanded');
+            arrow.textContent = content.classList.contains('expanded') ? '▲' : '▼';
+        }
+
+        // File input
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            handleFile(e.target.files[0]);
+        });
+
+        // Drag and drop
+        const uploadZone = document.getElementById('uploadZone');
+        uploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = 'var(--secondary)';
+        });
+        uploadZone.addEventListener('dragleave', () => {
+            uploadZone.style.borderColor = 'var(--primary)';
+        });
+        uploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            uploadZone.style.borderColor = 'var(--primary)';
+            handleFile(e.dataTransfer.files[0]);
+        });
+        async function handleFile(file) {
+            if (!file || !file.type.startsWith('image/')) {
+                alert('Molim te odaberi sliku!');
+                return;
+            }
+
+            currentImageFile = file;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                document.getElementById('previewImage').src = e.target.result;
+                document.getElementById('previewContainer').style.display = 'block';
+            };
+            reader.readAsDataURL(file);
+
+            document.getElementById('uploadZone').style.display = 'none';
+            document.getElementById('loading').style.display = 'block';
+            document.getElementById('resultsContainer').style.display = 'none';
+
+            const formData = new FormData();
+            formData.append('file', file);
+
+            try {
+                const response = await fetch(`${API_URL}/predict`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!response.ok) throw new Error('Greška pri klasifikaciji');
+
+                const data = await response.json();
+                displayResults(data.predictions, data.image);
+                addToHistory(data.predictions[0], data.image);
+                updateStats(data.predictions[0]);
+            } catch (error) {
+                alert('Greška: ' + error.message + '. Provjeri da li je backend pokrenut.');
+                reset();
+            } finally {
+                document.getElementById('loading').style.display = 'none';
+            }
+        }
+
+        function displayResults(predictions, imageData) {
+            const main = predictions[0];
+            const classKey = main.class;
+            const info = WASTE_INFO[classKey];
+
+            // Main result
+            document.getElementById('resultClass').textContent = main.name;
+            document.getElementById('resultConfidence').textContent = (main.confidence * 100).toFixed(1) + '%';
+
+            // Badges + DODAJ FEEDBACK BUTTON
+            const badges = document.getElementById('resultBadges');
+            badges.innerHTML = `
+        <span class="badge">${main.recyclable ? '♻️ Reciklabilno' : '❌ Nije Reciklabilno'}</span>
+        <span class="badge">${info.bin}</span>
+        <button class="badge" onclick="showFeedbackDialog('${classKey}', ${main.confidence})" 
+                style="cursor: pointer; background: rgba(255,255,255,0.3); border: 2px solid white;">
+            ✏️ Ispravi
+        </button>
+    `;
+
+            // SIDEBAR INFO
+            document.getElementById('disposalTypeSidebar').textContent = info.bin;
+            document.getElementById('disposalInstructionsSidebar').textContent = info.instructions;
+            document.getElementById('recyclingInfoContent').innerHTML = `<strong>${info.recycling}</strong>`;
+
+            // Environmental impact
+            document.getElementById('degradationTime').textContent = info.degradation;
+            document.getElementById('environmentalImpact').textContent = info.impact;
+
+            // Other predictions
+            const otherPreds = document.getElementById('otherPredictions');
+            otherPreds.innerHTML = predictions.slice(1).map(pred => `
+        <div class="info-item">
+            <strong>${pred.name}</strong>
+            <div style="display: flex; justify-content: space-between; margin-top: 4px;">
+                <span style="color: var(--text-secondary);">${(pred.confidence * 100).toFixed(1)}%</span>
+                <span style="font-size: 0.85rem;">${pred.recyclable ? '♻️' : '❌'}</span>
+            </div>
+        </div>
+    `).join('');
+
+            document.getElementById('resultsContainer').style.display = 'block';
+            document.getElementById('resetBtn').style.display = 'block';
+            showRandomFact();
+        }
+
+        function addToHistory(prediction, imageData) {
+            history.unshift({ prediction, imageData, timestamp: Date.now() });
+            if (history.length > 9) history.pop();
+            renderHistory();
+        }
+
+        function renderHistory() {
+            const grid = document.getElementById('historyGrid');
+            if (history.length === 0) {
+                grid.innerHTML = '<p style="color: var(--text-secondary); text-align: center; grid-column: 1/-1;">Nema istorije</p>';
+                return;
+            }
+
+            grid.innerHTML = history.map((item, i) => `
+            <div class="history-item">
+                <img src="${item.imageData}" alt="${item.prediction.name}">
+                <div class="history-label">${item.prediction.name.split(' ')[0]}</div>
+            </div>
+        `).join('');
+        }
+
+        function updateStats(prediction) {
+            stats.total++;
+            if (prediction.recyclable) stats.recyclable++;
+            stats.co2 = (stats.recyclable * 0.5).toFixed(1);
+
+            document.getElementById('headerTotal').textContent = stats.total;
+            document.getElementById('headerRecyclable').textContent = stats.recyclable;
+            document.getElementById('headerCO2').textContent = stats.co2 + 'kg';
+        }
+
+        function showRandomFact() {
+            const fact = funFacts[Math.floor(Math.random() * funFacts.length)];
+            document.getElementById('funFact').textContent = fact;
+        }
+
+        // Camera functions
+        async function openCamera() {
+            try {
+                currentStream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'environment' }
+                });
+                document.getElementById('cameraVideo').srcObject = currentStream;
+                document.getElementById('cameraModal').style.display = 'flex';
+            } catch (error) {
+                alert('Greška pri pristupu kameri: ' + error.message);
+            }
+        }
+
+        function closeCamera() {
+            if (currentStream) {
+                currentStream.getTracks().forEach(track => track.stop());
+                currentStream = null;
+            }
+            document.getElementById('cameraModal').style.display = 'none';
+        }
+
+        function capturePhoto() {
+            const video = document.getElementById('cameraVideo');
+            const canvas = document.createElement('canvas');
+            canvas.width = video.videoWidth;
+            canvas.height = video.videoHeight;
+            canvas.getContext('2d').drawImage(video, 0, 0);
+
+            canvas.toBlob(blob => {
+                const file = new File([blob], 'camera-photo.jpg', { type: 'image/jpeg' });
+                closeCamera();
+                handleFile(file);
+            }, 'image/jpeg');
+        }
+
+        function reset() {
+            document.getElementById('uploadZone').style.display = 'block';
+            document.getElementById('previewContainer').style.display = 'none';
+            document.getElementById('resultsContainer').style.display = 'none';
+            document.getElementById('resetBtn').style.display = 'none';
+            document.getElementById('fileInput').value = '';
+        }
+
+
+        // Dodaj feedback formu
+        async function submitFeedback(predictedClass, actualClass, confidence, imageFile) {
+            const formData = new FormData();
+            formData.append('file', imageFile);
+            formData.append('predicted_class', predictedClass);
+            formData.append('actual_class', actualClass);
+            formData.append('confidence', confidence);
+
+            try {
+                const response = await fetch(`${API_URL}/feedback`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (data.should_retrain) {
+                    showRetrainNotification(data.new_samples_count);
+                }
+
+                alert(`✅ Hvala na feedbacku! (${data.new_samples_count} novih uzoraka)`);
+            } catch (error) {
+                console.error('Feedback greška:', error);
+            }
+        }
+
+        // Notification za auto-retrain
+        function showRetrainNotification(sampleCount) {
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        background: linear-gradient(135deg, var(--primary), var(--secondary));
+        color: white;
+        padding: 20px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        z-index: 10000;
+        max-width: 300px;
+    `;
+
+            notification.innerHTML = `
+        <h3 style="margin: 0 0 10px 0;">🎉 Dovoljno podataka!</h3>
+        <p style="margin: 0 0 15px 0;">Prikupljeno ${sampleCount} novih slika. Želiš li retrenirati model?</p>
+        <button onclick="startRetrain()" class="btn btn-primary" style="width: 100%; margin-bottom: 8px;">
+            🔄 Retreniraj Sad
+        </button>
+        <button onclick="this.parentElement.remove()" class="btn btn-secondary" style="width: 100%;">
+            ⏰ Kasnije
+        </button>
+    `;
+
+            document.body.appendChild(notification);
+        }
+
+// Pokreni retraining sa modalnim dijalogom za izbor
+        async function startRetrain() {
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+
+            modal.innerHTML = `
+        <div class="modal-content">
+            <h2 style="color: var(--text-primary); margin-bottom: 20px;">🔄 Retrain Model</h2>
+            
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Izaberi tip retraininga:
+            </p>
+            
+            <div style="display: grid; gap: 15px; margin-bottom: 20px;">
+                <button class="btn btn-primary" onclick="executeRetrain('incremental', 10); this.closest('.modal').remove();" 
+                        style="padding: 20px; text-align: left;">
+                    <div style="font-size: 1.2rem; margin-bottom: 5px;">⚡ Incremental (Brzo)</div>
+                    <div style="font-size: 0.85rem; opacity: 0.9;">
+                        • Samo novi podaci (~50-100 slika)<br>
+                        • Trajanje: 3-5 minuta<br>
+                        • Preporučeno za redovan feedback
+                    </div>
+                </button>
+                
+                <button class="btn btn-secondary" onclick="executeRetrain('full', 20); this.closest('.modal').remove();" 
+                        style="padding: 20px; text-align: left;">
+                    <div style="font-size: 1.2rem; margin-bottom: 5px;">🔥 Full Retrain (Temeljno)</div>
+                    <div style="font-size: 0.85rem; opacity: 0.9;">
+                        • Cijeli dataset (1000+ slika)<br>
+                        • Trajanje: 30-60 minuta<br>
+                        • Koristi samo pri velikom padu tačnosti
+                    </div>
+                </button>
+            </div>
+            
+            <button class="btn btn-secondary" onclick="this.closest('.modal').remove()" style="width: 100%;">
+                ❌ Otkaži
+            </button>
+        </div>
+    `;
+
+            document.body.appendChild(modal);
+        }
+
+        async function executeRetrain(mode, epochs) {
+            const modeText = mode === 'incremental' ? 'Incremental' : 'Full';
+            const timeEstimate = mode === 'incremental' ? '3-5 minuta' : '30-60 minuta';
+            
+            if (!confirm(`${modeText} retraining će trajati ${timeEstimate}. Nastavi?`)) return;
+
+            const loadingDiv = document.createElement('div');
+            loadingDiv.innerHTML = `
+        <div style="position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.8); z-index: 9999; display: flex; align-items: center; justify-content: center;">
+            <div style="background: var(--bg-card); padding: 40px; border-radius: 16px; text-align: center;">
+                <div class="spinner"></div>
+                <h2 style="color: var(--text-primary); margin-top: 20px;">🔄 ${modeText} Retraining...</h2>
+                <p style="color: var(--text-secondary);">Molim sačekaj, ovo može trajati ${timeEstimate}.</p>
+            </div>
+        </div>
+    `;
+            document.body.appendChild(loadingDiv);
+
+            try {
+                const response = await fetch(`${API_URL}/learning/retrain?epochs=${epochs}&mode=${mode}`, {
+                    method: 'POST'
+                });
+
+                const data = await response.json();
+
+                loadingDiv.remove();
+                alert(`✅ ${data.message}`);
+                location.reload();
+            } catch (error) {
+                loadingDiv.remove();
+                alert(`❌ Greška: ${error.message}`);
+            }
+        }
+
+        // Prikaži learning stats
+        async function showLearningStats() {
+            try {
+                const response = await fetch(`${API_URL}/learning/stats`);
+                const stats = await response.json();
+
+                const modal = document.createElement('div');
+                modal.style.cssText = `
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.8);
+            z-index: 9999;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        `;
+
+                modal.innerHTML = `
+            <div style="background: var(--bg-card); padding: 30px; border-radius: 16px; max-width: 500px; width: 100%;">
+                <h2 style="color: var(--text-primary); margin-bottom: 20px;">📊 Continuous Learning Stats</h2>
+                
+                <div style="display: grid; gap: 15px;">
+                    <div class="info-item">
+                        <strong>Novi uzorci:</strong> ${stats.new_samples} / ${stats.auto_retrain_threshold}
+                    </div>
+                    <div class="info-item">
+                        <strong>Ukupan feedback:</strong> ${stats.total_feedback}
+                    </div>
+                    <div class="info-item">
+                        <strong>Accuracy:</strong> ${stats.accuracy.toFixed(1)}%
+                    </div>
+                    <div class="info-item">
+                        <strong>Broj retreninga:</strong> ${stats.retrain_count}
+                    </div>
+                    <div class="info-item">
+                        <strong>Zadnji retrain:</strong> ${stats.last_retrain || 'Nikad'}
+                    </div>
+                </div>
+                
+                <div style="margin-top: 20px; display: flex; gap: 10px;">
+                    <button onclick="this.parentElement.parentElement.parentElement.remove()" class="btn btn-secondary" style="flex: 1;">
+                        Zatvori
+                    </button>
+                    <button onclick="startRetrain(20); this.parentElement.parentElement.parentElement.remove();" class="btn btn-primary" style="flex: 1;">
+                        🔄 Retreniraj
+                    </button>
+                </div>
+            </div>
+        `;
+
+                document.body.appendChild(modal);
+            } catch (error) {
+                alert('Greška pri učitavanju statistike');
+            }
+        }
+
+        function showFeedbackDialog(predictedClass, confidence) {
+            const classes = Object.keys(WASTE_INFO);
+
+            const modal = document.createElement('div');
+            modal.className = 'modal';
+            modal.style.display = 'flex';
+
+            modal.innerHTML = `
+        <div class="modal-content">
+            <h2 style="color: var(--text-primary); margin-bottom: 20px;">✏️ Ispravi Predikciju</h2>
+            
+            <p style="color: var(--text-secondary); margin-bottom: 20px;">
+                Model je predvidio: <strong>${WASTE_INFO[predictedClass].name}</strong><br>
+                Ako nije tačno, izaberi ispravnu kategoriju:
+            </p>
+            
+            <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 10px; margin-bottom: 20px;">
+                ${classes.map(cls => `
+                    <button class="btn ${cls === predictedClass ? 'btn-primary' : 'btn-secondary'}" 
+                            onclick="submitFeedbackFromDialog('${predictedClass}', '${cls}', ${confidence}); this.closest('.modal').remove();"
+                            style="padding: 12px;">
+                        ${WASTE_INFO[cls].name}
+                    </button>
+                `).join('')}
+            </div>
+            
+            <div style="display: flex; gap: 10px;">
+                <button class="btn btn-primary" 
+                        onclick="submitFeedbackFromDialog('${predictedClass}', '${predictedClass}', ${confidence}); this.closest('.modal').remove();"
+                        style="flex: 1;">
+                    ✅ Tačno je
+                </button>
+                <button class="btn btn-secondary" 
+                        onclick="this.closest('.modal').remove()"
+                        style="flex: 1;">
+                    ❌ Otkaži
+                </button>
+            </div>
+        </div>
+    `;
+
+            document.body.appendChild(modal);
+        }
+
+        // Submit feedback iz dialoga
+        async function submitFeedbackFromDialog(predictedClass, actualClass, confidence) {
+            if (!currentImageFile) {
+                alert('Greška: Slika nije dostupna');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('file', currentImageFile);
+            formData.append('predicted_class', predictedClass);
+            formData.append('actual_class', actualClass);
+            formData.append('confidence', confidence);
+
+            try {
+                const response = await fetch(`${API_URL}/feedback`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                // Prikaz poruke
+                const message = predictedClass === actualClass
+                    ? `✅ Hvala na potvrdi! (${data.new_samples_count}/${learner.config?.auto_retrain_threshold || 100})`
+                    : `✅ Hvala na ispravci! Model će naučiti. (${data.new_samples_count}/100)`;
+
+                const toast = document.createElement('div');
+                toast.style.cssText = `
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 15px 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+            z-index: 10000;
+            animation: slideIn 0.3s ease;
+        `;
+                toast.textContent = message;
+                document.body.appendChild(toast);
+
+                setTimeout(() => toast.remove(), 3000);
+
+                // Ako treba retrain
+                if (data.should_retrain) {
+                    setTimeout(() => showRetrainNotification(data.new_samples_count), 3500);
+                }
+
+            } catch (error) {
+                console.error('Feedback greška:', error);
+                alert('Greška pri slanju feedbacka: ' + error.message);
+            }
+        }
+        // Initialize
+        renderHistory();
+        showRandomFact();
+    </script>
+</body>
+
+</html>
