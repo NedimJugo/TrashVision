@@ -245,28 +245,6 @@ netstat -ano | findstr :8000
 
 Više rješenja u [DOKUMENTACIJA.md](DOKUMENTACIJA.md#-troubleshooting).
 
-## 🗺️ Roadmap
-
-### Q1 2026
-- [ ] Mobile aplikacija (React Native)
-- [ ] Multi-language support (EN, DE, FR)
-- [ ] User accounts i authentication
-- [ ] Advanced analytics dashboard
-
-### Q2 2026
-- [ ] Object detection (lokalizacija otpada)
-- [ ] Multi-label klasifikacija
-- [ ] Video stream processing
-- [ ] AR pregled (augmented reality)
-
-### Q3 2026
-- [ ] Gamifikacija sistema
-- [ ] Leaderboards i achievements
-- [ ] Community challenges
-- [ ] Reward program
-
-Kompletan roadmap u [DOKUMENTACIJA.md](DOKUMENTACIJA.md#-budući-razvoj-i-roadmap).
-
 ## 🤝 Doprinos
 
 Dobrodošli su svi doprinosi! Ako želite doprinijeti:
@@ -316,18 +294,13 @@ Ovaj projekat je licenciran pod MIT licencom - pogledajte [LICENSE](LICENSE) faj
 
 ## 📞 Kontakt
 
-- **GitHub Issues**: [github.com/yourusername/trashvision/issues](https://github.com/yourusername/trashvision/issues)
-- **Email**: support@trashvision.ai
-- **Discord**: [TrashVision Community](https://discord.gg/trashvision)
+- **GitHub Issues**: [github.com/NedimJugo/TrashVision/issues](https://github.com/NedimJugo/TrashVision/issues)
+- **Email**: nedim.jugoo@gmail.com
 
 ---
 
 <div align="center">
 
 **TrashVision** - Čineći svijet čistijim, jednu sliku po sliku. 🌍♻️
-
-*Powered by AI • Built with ❤️ • Open Source*
-
-**[Dokumentacija](DOKUMENTACIJA.md)** • **[Demo](https://demo.trashvision.ai)** • **[Website](https://trashvision.ai)**
 
 </div>
